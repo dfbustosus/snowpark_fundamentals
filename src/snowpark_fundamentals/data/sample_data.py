@@ -55,8 +55,7 @@ def create_customer_churn_dataset(
     # Each column uses a different constant seed for independent randomness.
     # RANDOM(constant) produces a different value per row in GENERATOR context;
     # the constant seed controls reproducibility, not per-row variation.
-    session.sql(
-        f"""
+    session.sql(f"""
         CREATE OR REPLACE TABLE {fqn} AS
         WITH base AS (
             SELECT
@@ -110,8 +109,7 @@ def create_customer_churn_dataset(
                 ELSE 0
             END AS CHURNED
         FROM base
-    """
-    ).collect()
+    """).collect()
 
     return session.table(fqn)
 
@@ -138,8 +136,7 @@ def create_sample_orders_dataset(
     """
     fqn = _get_fqn(session, table_name)
 
-    session.sql(
-        f"""
+    session.sql(f"""
         CREATE OR REPLACE TABLE {fqn} AS
         SELECT
             SEQ4() AS ORDER_ID,
@@ -162,8 +159,7 @@ def create_sample_orders_dataset(
             END AS CATEGORY,
             UNIFORM(1, 10, RANDOM({seed + 5})) AS ITEM_COUNT
         FROM TABLE(GENERATOR(ROWCOUNT => {n_rows}))
-    """
-    ).collect()
+    """).collect()
 
     return session.table(fqn)
 
@@ -187,8 +183,7 @@ def create_sample_customers_dataset(
     """
     fqn = _get_fqn(session, table_name)
 
-    session.sql(
-        f"""
+    session.sql(f"""
         CREATE OR REPLACE TABLE {fqn} AS
         SELECT
             SEQ4() AS CUSTOMER_ID,
@@ -210,8 +205,7 @@ def create_sample_customers_dataset(
                 WHEN 5 THEN 'JP'
             END AS COUNTRY
         FROM TABLE(GENERATOR(ROWCOUNT => {n_rows}))
-    """
-    ).collect()
+    """).collect()
 
     return session.table(fqn)
 
