@@ -85,4 +85,5 @@ def predict(model: Any, df: DataFrame) -> DataFrame:
     Returns:
         DataFrame with prediction column added.
     """
-    return model.predict(df)
+    result: DataFrame = model.predict(df)
+    return result
