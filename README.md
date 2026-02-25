@@ -1,10 +1,10 @@
 # Snowpark ML Fundamentals
 
-[![Python Tests](https://github.com/<owner>/<repo>/actions/workflows/python-tests.yml/badge.svg)](https://github.com/<owner>/<repo>/actions/workflows/python-tests.yml)
-[![Lint](https://github.com/<owner>/<repo>/actions/workflows/python-lint.yml/badge.svg)](https://github.com/<owner>/<repo>/actions/workflows/python-lint.yml)
-[![Type Check](https://github.com/<owner>/<repo>/actions/workflows/python-typecheck.yml/badge.svg)](https://github.com/<owner>/<repo>/actions/workflows/python-typecheck.yml)
-[![Security Scan](https://github.com/<owner>/<repo>/actions/workflows/security-scan.yml/badge.svg)](https://github.com/<owner>/<repo>/actions/workflows/security-scan.yml)
-[![CodeQL](https://github.com/<owner>/<repo>/actions/workflows/codeql.yml/badge.svg)](https://github.com/<owner>/<repo>/actions/workflows/codeql.yml)
+[![Python Tests](https://github.com/dfbustosus/snowpark_fundamentals/actions/workflows/python-tests.yml/badge.svg)](https://github.com/dfbustosus/snowpark_fundamentals/actions/workflows/python-tests.yml)
+[![Lint](https://github.com/dfbustosus/snowpark_fundamentals/actions/workflows/python-lint.yml/badge.svg)](https://github.com/dfbustosus/snowpark_fundamentals/actions/workflows/python-lint.yml)
+[![Type Check](https://github.com/dfbustosus/snowpark_fundamentals/actions/workflows/python-typecheck.yml/badge.svg)](https://github.com/dfbustosus/snowpark_fundamentals/actions/workflows/python-typecheck.yml)
+[![Security Scan](https://github.com/dfbustosus/snowpark_fundamentals/actions/workflows/security-scan.yml/badge.svg)](https://github.com/dfbustosus/snowpark_fundamentals/actions/workflows/security-scan.yml)
+[![CodeQL](https://github.com/dfbustosus/snowpark_fundamentals/actions/workflows/codeql.yml/badge.svg)](https://github.com/dfbustosus/snowpark_fundamentals/actions/workflows/codeql.yml)
 [![Python 3.10 | 3.11 | 3.12](https://img.shields.io/badge/python-3.10%20|%203.11%20|%203.12-blue.svg)](https://www.python.org/)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Imports: isort](https://img.shields.io/badge/imports-isort-1674b1.svg)](https://pycqa.github.io/isort/)
