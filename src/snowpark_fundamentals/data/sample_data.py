@@ -21,8 +21,8 @@ def _get_fqn(session: Session, table_name: str) -> str:
     Returns:
         Fully-qualified name like 'MLDS_D.PREDICTIONS.TABLE_NAME'.
     """
-    db = session.get_current_database().replace('"', "")
-    schema = session.get_current_schema().replace('"', "")
+    db = (session.get_current_database() or "").replace('"', "")
+    schema = (session.get_current_schema() or "").replace('"', "")
     return f"{db}.{schema}.{table_name}"
 
 
@@ -225,10 +225,11 @@ def get_dataset_summary(df: DataFrame) -> DataFrame:
     Returns:
         DataFrame with churn distribution and key stats.
     """
-    return df.group_by("CHURNED").agg(
+    result: DataFrame = df.group_by("CHURNED").agg(
         F.count("*").alias("COUNT"),
         F.avg("AGE").alias("AVG_AGE"),
         F.avg("TENURE_MONTHS").alias("AVG_TENURE"),
         F.avg("MONTHLY_CHARGES").alias("AVG_MONTHLY_CHARGES"),
         F.avg("SUPPORT_TICKETS").alias("AVG_SUPPORT_TICKETS"),
     )
+    return result
