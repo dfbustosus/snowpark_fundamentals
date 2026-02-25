@@ -26,7 +26,7 @@ def create_session(env_path: str | Path | None = None) -> Session:
         Configured Snowpark Session ready for use.
     """
     config = SnowflakeConfig.from_env(env_path)
-    session = Session.builder.configs(config.to_connection_params()).create()
+    session: Session = Session.builder.configs(config.to_connection_params()).create()
     return session
 
 
