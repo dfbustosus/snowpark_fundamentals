@@ -69,7 +69,8 @@ def list_models(registry: Registry) -> DataFrame:
     Returns:
         DataFrame with model listing.
     """
-    return registry.show_models()
+    result: DataFrame = registry.show_models()
+    return result
 
 
 def load_model_and_predict(
@@ -91,7 +92,8 @@ def load_model_and_predict(
     """
     model_ref = registry.get_model(model_name)
     model_version = model_ref.version(version_name)
-    return model_version.run(input_df, function_name="predict")
+    result: DataFrame = model_version.run(input_df, function_name="predict")
+    return result
 
 
 def delete_model(registry: Registry, model_name: str) -> None:
