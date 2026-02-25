@@ -24,7 +24,7 @@ def create_derived_features(df: DataFrame) -> DataFrame:
     Returns:
         DataFrame with additional engineered features.
     """
-    return (
+    result: DataFrame = (
         df.with_column(
             "CHARGES_PER_MONTH_TENURE",
             F.when(
@@ -59,6 +59,7 @@ def create_derived_features(df: DataFrame) -> DataFrame:
             ).otherwise(F.lit(0)),
         )
     )
+    return result
 
 
 def create_interaction_features(
