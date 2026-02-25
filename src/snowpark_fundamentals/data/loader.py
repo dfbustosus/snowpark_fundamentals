@@ -89,4 +89,5 @@ def add_row_index(df: DataFrame, column_name: str = "ROW_INDEX") -> DataFrame:
     Returns:
         DataFrame with added index column.
     """
-    return df.with_column(column_name, F.monotonically_increasing_id())
+    result: DataFrame = df.with_column(column_name, F.monotonically_increasing_id())
+    return result
