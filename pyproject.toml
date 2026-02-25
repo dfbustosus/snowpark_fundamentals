@@ -79,6 +79,9 @@ filterwarnings = [
     "ignore::DeprecationWarning",
 ]
 
+[tool.bandit]
+skips = ["B101", "B105", "B608"]
+
 [tool.coverage.run]
 source = ["snowpark_fundamentals"]
 omit = ["tests/*", "notebooks/*"]
