@@ -1,1 +1,188 @@
-# snowpark_fundamentals
+# Snowpark ML Fundamentals
+
+[![Python Tests](https://github.com/<owner>/<repo>/actions/workflows/python-tests.yml/badge.svg)](https://github.com/<owner>/<repo>/actions/workflows/python-tests.yml)
+[![Lint](https://github.com/<owner>/<repo>/actions/workflows/python-lint.yml/badge.svg)](https://github.com/<owner>/<repo>/actions/workflows/python-lint.yml)
+[![Type Check](https://github.com/<owner>/<repo>/actions/workflows/python-typecheck.yml/badge.svg)](https://github.com/<owner>/<repo>/actions/workflows/python-typecheck.yml)
+[![Security Scan](https://github.com/<owner>/<repo>/actions/workflows/security-scan.yml/badge.svg)](https://github.com/<owner>/<repo>/actions/workflows/security-scan.yml)
+[![CodeQL](https://github.com/<owner>/<repo>/actions/workflows/codeql.yml/badge.svg)](https://github.com/<owner>/<repo>/actions/workflows/codeql.yml)
+[![Python 3.10 | 3.11 | 3.12](https://img.shields.io/badge/python-3.10%20|%203.11%20|%203.12-blue.svg)](https://www.python.org/)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Imports: isort](https://img.shields.io/badge/imports-isort-1674b1.svg)](https://pycqa.github.io/isort/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://pre-commit.com/)
+[![Coverage](https://img.shields.io/badge/coverage-%E2%89%A570%25-brightgreen.svg)](pyproject.toml)
+
+**Week 1 - Lunch & Learn Series: Snowpark ML for Python**
+
+A production-grade, modular tutorial covering Snowpark ML fundamentals:
+Python DataFrames, ML preprocessing, model training, and the Snowflake Model Registry.
+
+---
+
+## Tutorial Agenda (1 Hour)
+
+| Time | Module | Notebook | Topics |
+|------|--------|----------|--------|
+| 0-5 min | **Presentation** | `00_presentation` | Overview, objectives, architecture, environment check |
+| 5-15 min | **DataFrames** | `01_snowpark_dataframes` | Connect, load data, select, filter, aggregate, join, lazy evaluation |
+| 15-25 min | **Preprocessing** | `02_data_preprocessing` | StandardScaler, OneHotEncoder, OrdinalEncoder, feature engineering |
+| 25-40 min | **Model Training** | `03_model_training` | XGBoost, RandomForest, LogisticRegression, metrics, feature importance |
+| 40-50 min | **Model Registry** | `04_model_registry` | Register, version, load, and score with the Snowflake Model Registry |
+| 50-60 min | **End-to-End** | `05_end_to_end_pipeline` | Pipeline API, Snowpark vs Stored Procedures, architecture recap |
+
+## Project Structure
+
+```
+snowpark_fundamentals/
+├── src/snowpark_fundamentals/       # Modular Python package
+│   ├── config.py                    # Connection configuration (12-factor)
+│   ├── session.py                   # Session factory
+│   ├── data/
+│   │   ├── loader.py                # DataFrame loading utilities
+│   │   └── sample_data.py           # Synthetic dataset generation
+│   ├── preprocessing/
+│   │   ├── transformers.py          # Snowpark ML scalers & encoders
+│   │   └── feature_engineering.py   # Derived & interaction features
+│   ├── modeling/
+│   │   ├── trainer.py               # Model training (XGB, RF, LR)
+│   │   ├── evaluation.py            # Metrics & feature importance
+│   │   └── pipeline.py              # ML Pipeline construction
+│   └── registry/
+│       └── model_registry.py        # Snowflake Model Registry ops
+├── notebooks/                       # Tutorial Jupyter notebooks (0-5)
+├── tests/                           # Unit tests with mocking
+├── .github/workflows/               # CI/CD (lint, test, type-check, security)
+├── pyproject.toml                   # Project config & tool settings
+├── requirements.txt                 # Dependencies
+└── .pre-commit-config.yaml          # Pre-commit hooks
+```
+
+## Quick Start
+
+### Prerequisites
+
+- Python 3.10, 3.11, or 3.12
+- A Snowflake account with `SNOWFLAKE_SAMPLE_DATA` access
+- A warehouse with sufficient compute (MEDIUM recommended)
+
+### Setup
+
+```bash
+# Clone the repo
+git clone <repo-url>
+cd snowpark_fundamentals
+
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate  # macOS/Linux
+
+# Install dependencies
+pip install -e ".[dev,notebooks]"
+
+# Configure credentials
+cp .env.example .env
+# Edit .env with your Snowflake credentials
+```
+
+### Run the Tutorial
+
+```bash
+# Start Jupyter
+jupyter notebook notebooks/
+
+# Or run individual notebooks
+jupyter notebook notebooks/01_snowpark_dataframes.ipynb
+```
+
+### Run Tests
+
+```bash
+pytest tests/ -v --cov=snowpark_fundamentals
+```
+
+## Key Technologies
+
+| Package | Purpose |
+|---------|---------|
+| `snowflake-snowpark-python` | DataFrame API, session management |
+| `snowflake-ml-python` | ML preprocessing, training, registry |
+| `pytest` | Unit testing with mocking |
+| `black` + `isort` + `flake8` | Code formatting and linting |
+| `mypy` | Static type checking |
+
+## Architecture
+
+```
+Snowflake Warehouse (all computation runs here)
+    │
+    ├── Snowpark DataFrames     → Lazy, distributed SQL execution
+    ├── ML Preprocessing        → StandardScaler, Encoders (server-side)
+    ├── Model Training          → XGBoost, RandomForest (warehouse compute)
+    ├── Model Registry          → Versioned, governed model storage
+    └── Inference               → Batch scoring via Registry or Stored Procedures
+```
+
+## Best Practices
+
+This project follows production-grade patterns applicable to any Snowpark ML project.
+
+### Configuration & Security
+
+- **12-Factor App configuration** — all credentials loaded from environment variables via `.env`, never hardcoded
+- **Immutable config** — `SnowflakeConfig` uses a frozen dataclass to prevent accidental mutation at runtime
+- **Secret detection** — pre-commit hooks block private keys and large files from being committed
+- **Security scanning** — Bandit and CodeQL run on every push to catch vulnerabilities early
+- **`.env.example` template** — provides a safe, credential-free reference for new contributors
+
+### Code Quality
+
+- **Strict formatting** — Black (100-char line length) + isort enforce a consistent style across the entire codebase
+- **Linting** — Flake8 catches common errors and anti-patterns before they reach review
+- **Static type checking** — mypy validates type annotations to prevent runtime surprises
+- **Pre-commit hooks** — automated checks run locally before every commit (formatting, linting, trailing whitespace, YAML validation, merge conflict detection)
+
+### Testing
+
+- **Mock-based unit tests** — all tests run without a live Snowflake connection, enabling fast CI feedback
+- **Minimum 70% coverage** — enforced via `pytest-cov` in both local runs and CI
+- **Multi-version matrix** — CI tests against Python 3.10, 3.11, and 3.12 to ensure compatibility
+- **Isolated fixtures** — `conftest.py` provides reusable `mock_session`, `mock_dataframe`, and `sample_env_vars` fixtures
+
+### Architecture & Design
+
+- **Server-side computation** — all heavy operations (preprocessing, training, inference) execute inside the Snowflake warehouse, not locally
+- **Lazy evaluation** — Snowpark DataFrames defer execution until an action is called, minimizing unnecessary data transfers
+- **Modular package structure** — each concern (config, data, preprocessing, modeling, registry) lives in its own subpackage with clear interfaces
+- **Factory pattern** — `create_session()` is the single entry point for session creation, ensuring consistent configuration
+- **Scikit-learn compatible API** — Snowpark ML mirrors the familiar `fit` / `transform` / `predict` interface, reducing the learning curve
+- **Reusable transformers** — fitted preprocessing objects are returned alongside transformed data for consistent inference on new data
+
+### CI/CD
+
+- **Five independent pipelines** — tests, lint, type check, security scan, and CodeQL run in parallel on every push and pull request
+- **Dependabot** — automated dependency update PRs keep packages current and secure
+- **Pull request template** — standardized PR descriptions ensure reviewers have the context they need
+- **Issue templates** — separate templates for bugs and feature requests streamline triage
+
+### Dependency Management
+
+- **Pinned critical versions** — `xgboost` and `numpy` are pinned to versions available on the Snowflake conda channel, preventing runtime mismatches
+- **Optional extras** — `[dev]` and `[notebooks]` extras keep production dependencies lean
+- **Single source of truth** — `pyproject.toml` manages all project metadata, tool configs, and dependency specs in one place
+
+## Series Roadmap
+
+| Week | Topic | Status |
+|------|-------|--------|
+| 1 | **Snowpark ML Fundamentals** | This repo |
+| 2 | Snowflake Model Registry (Deep Dive) | Upcoming |
+| 3 | Feature Engineering in Snowflake | Upcoming |
+| 4 | Model Training at Scale | Upcoming |
+| 5 | Inference Patterns | Upcoming |
+| 6 | Monitoring & Observability | Upcoming |
+| 7 | CI/CD for Snowflake ML | Upcoming |
+| 8 | Governance & Access Control | Upcoming |
+
+## License
+
+MIT
