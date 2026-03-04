@@ -12,14 +12,14 @@
 [![Pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://pre-commit.com/)
 [![Coverage](https://img.shields.io/badge/coverage-%E2%89%A570%25-brightgreen.svg)](pyproject.toml)
 
-**Week 1 - Lunch & Learn Series: Snowpark ML for Python**
+**Lunch & Learn Series: Snowpark ML for Python**
 
-A production-grade, modular tutorial covering Snowpark ML fundamentals:
-Python DataFrames, ML preprocessing, model training, and the Snowflake Model Registry.
+A production-grade, modular tutorial covering Snowpark ML fundamentals,
+feature engineering, and the Snowflake Feature Store.
 
 ---
 
-## Tutorial Agenda (1 Hour)
+## Week 1: Snowpark ML Fundamentals (1 Hour)
 
 | Time | Module | Notebook | Topics |
 |------|--------|----------|--------|
@@ -29,6 +29,16 @@ Python DataFrames, ML preprocessing, model training, and the Snowflake Model Reg
 | 25-40 min | **Model Training** | `03_model_training` | XGBoost, RandomForest, LogisticRegression, metrics, feature importance |
 | 40-50 min | **Model Registry** | `04_model_registry` | Register, version, load, and score with the Snowflake Model Registry |
 | 50-60 min | **End-to-End** | `05_end_to_end_pipeline` | Pipeline API, Snowpark vs Stored Procedures, architecture recap |
+
+## Week 2: Feature Engineering in Snowflake (1 Hour)
+
+| Time | Module | Resource | Topics |
+|------|--------|----------|--------|
+| 0-10 min | **Concepts** | `06_feature_store_concepts` | What is a Feature Store, architecture, synthetic temporal data |
+| 10-20 min | **SQL Engineering** | `07_feature_engineering_sql` | Deduplication, time-windowed aggregations, ratios, bucketing |
+| 20-30 min | **Feature Views** | `08_feature_views` | Entity, managed vs external FeatureView, registration |
+| 30-40 min | **Training Sets** | `09_training_sets` | Point-in-time joins, `generate_training_set()`, inference retrieval |
+| 40-60 min | **dbt Feature Store** | `dbt_feature_store/README.md` | Full dbt command reference, model walkthrough, macros, how to build your own features |
 
 ## Project Structure
 
@@ -47,10 +57,19 @@ snowpark_fundamentals/
 │   │   ├── trainer.py               # Model training (XGB, RF, LR)
 │   │   ├── evaluation.py            # Metrics & feature importance
 │   │   └── pipeline.py              # ML Pipeline construction
-│   └── registry/
-│       └── model_registry.py        # Snowflake Model Registry ops
-├── notebooks/                       # Tutorial Jupyter notebooks (0-5)
+│   ├── registry/
+│   │   └── model_registry.py        # Snowflake Model Registry ops
+│   └── feature_store/               # Week 2: Feature Store operations
+│       ├── entities.py              # Entity setup & registration
+│       ├── feature_data.py          # Synthetic temporal data generation
+│       ├── feature_views.py         # Managed & external FeatureViews
+│       └── training_sets.py         # Training set & feature retrieval
+├── notebooks/                       # Tutorial Jupyter notebooks (0-11)
 ├── tests/                           # Unit tests with mocking
+├── dbt_feature_store/               # dbt project for feature engineering
+│   ├── models/                      # staging → features → marts
+│   ├── macros/                      # Reusable SQL helpers
+│   └── tests/                       # Data quality tests
 ├── .github/workflows/               # CI/CD (lint, test, type-check, security)
 ├── pyproject.toml                   # Project config & tool settings
 ├── requirements.txt                 # Dependencies
@@ -100,12 +119,26 @@ jupyter notebook notebooks/01_snowpark_dataframes.ipynb
 pytest tests/ -v --cov=snowpark_fundamentals
 ```
 
+### dbt Feature Store (Week 2)
+
+```bash
+# Install dbt deps (dbt-snowflake is in the main project requirements)
+make dbt-setup
+
+# Run dbt models (requires source tables from notebooks 06-07)
+make dbt-run
+
+# Run dbt data quality tests
+make dbt-test
+```
+
 ## Key Technologies
 
 | Package | Purpose |
 |---------|---------|
 | `snowflake-snowpark-python` | DataFrame API, session management |
-| `snowflake-ml-python` | ML preprocessing, training, registry |
+| `snowflake-ml-python` | ML preprocessing, training, registry, Feature Store |
+| `dbt-snowflake` | SQL feature engineering (separate venv) |
 | `pytest` | Unit testing with mocking |
 | `black` + `isort` + `flake8` | Code formatting and linting |
 | `mypy` | Static type checking |
@@ -117,9 +150,10 @@ Snowflake Warehouse (all computation runs here)
     │
     ├── Snowpark DataFrames     → Lazy, distributed SQL execution
     ├── ML Preprocessing        → StandardScaler, Encoders (server-side)
+    ├── Feature Store           → Entities, Feature Views, training sets
     ├── Model Training          → XGBoost, RandomForest (warehouse compute)
     ├── Model Registry          → Versioned, governed model storage
-    └── Inference               → Batch scoring via Registry or Stored Procedures
+    └── Inference               → Feature retrieval + batch scoring
 ```
 
 ## Best Practices
@@ -174,14 +208,13 @@ This project follows production-grade patterns applicable to any Snowpark ML pro
 
 | Week | Topic | Status |
 |------|-------|--------|
-| 1 | **Snowpark ML Fundamentals** | This repo |
-| 2 | Snowflake Model Registry (Deep Dive) | Upcoming |
-| 3 | Feature Engineering in Snowflake | Upcoming |
-| 4 | Model Training at Scale | Upcoming |
-| 5 | Inference Patterns | Upcoming |
-| 6 | Monitoring & Observability | Upcoming |
-| 7 | CI/CD for Snowflake ML | Upcoming |
-| 8 | Governance & Access Control | Upcoming |
+| 1 | **Snowpark ML Fundamentals** | Complete |
+| 2 | **Feature Engineering in Snowflake** | Complete |
+| 3 | Model Training at Scale | Upcoming |
+| 4 | Inference Patterns | Upcoming |
+| 5 | Monitoring & Observability | Upcoming |
+| 6 | CI/CD for Snowflake ML | Upcoming |
+| 7 | Governance & Access Control | Upcoming |
 
 ## License
 
