@@ -8,6 +8,10 @@ numpy==2.2.5     # Must match Snowflake conda channel
 # Configuration
 python-dotenv>=1.0.0
 
+# dbt (Week 2: Feature Engineering)
+# dbt-snowflake lives in dbt_feature_store/requirements.txt (separate venv)
+# to avoid pathspec conflict with black 26.x
+
 # Notebook dependencies
 jupyter>=1.0.0
 ipykernel>=6.29.0

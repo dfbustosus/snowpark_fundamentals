@@ -1,0 +1,31 @@
+version: 2
+
+sources:
+  - name: tutorial_raw
+    description: "Synthetic tables created by notebook data generation functions"
+    database: "{{ env_var('SNOWFLAKE_DATABASE') }}"
+    schema: "{{ env_var('SNOWFLAKE_SCHEMA') }}"
+    tables:
+      - name: customer_transactions
+        identifier: CUSTOMER_TRANSACTIONS
+        description: "Customer transaction history with dates and amounts"
+        columns:
+          - name: TRANSACTION_ID
+          - name: CUSTOMER_ID
+          - name: ORDER_DATE
+          - name: ORDER_AMOUNT
+          - name: CATEGORY
+          - name: ORDER_STATUS
+          - name: ITEM_COUNT
+          - name: CHANNEL
+
+      - name: customer_interactions
+        identifier: CUSTOMER_INTERACTIONS
+        description: "Customer engagement events (page views, clicks, support tickets)"
+        columns:
+          - name: INTERACTION_ID
+          - name: CUSTOMER_ID
+          - name: INTERACTION_DATE
+          - name: INTERACTION_TYPE
+          - name: CHANNEL
+          - name: DURATION_SECONDS

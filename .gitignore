@@ -205,3 +205,9 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# dbt
+dbt_feature_store/target/
+dbt_feature_store/dbt_packages/
+dbt_feature_store/logs/
+.user.yml

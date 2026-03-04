@@ -1,6 +1,7 @@
 .PHONY: help install install-dev install-notebooks install-all \
        format lint typecheck security test test-cov \
-       check ci clean pre-commit pre-commit-install notebook
+       check ci clean pre-commit pre-commit-install notebook \
+       dbt-setup dbt-run dbt-test dbt-docs dbt-clean
 
 # ──────────────────────────────────────────────
 # Default
@@ -81,6 +82,26 @@ ci: lint typecheck security test-cov ## Run full CI pipeline locally (lint + typ
 
 notebook: ## Launch Jupyter with the tutorial notebooks
 	jupyter notebook notebooks/
+
+# ──────────────────────────────────────────────
+# dbt
+# ──────────────────────────────────────────────
+
+dbt-setup: ## Install dbt deps (dbt-snowflake already in main venv)
+	cd dbt_feature_store && dbt deps
+
+dbt-run: ## Run dbt models
+	cd dbt_feature_store && dbt run --profiles-dir .
+
+dbt-test: ## Run dbt tests
+	cd dbt_feature_store && dbt test --profiles-dir .
+
+dbt-docs: ## Generate and serve dbt docs
+	cd dbt_feature_store && dbt docs generate --profiles-dir .
+	cd dbt_feature_store && dbt docs serve --profiles-dir .
+
+dbt-clean: ## Clean dbt artifacts
+	rm -rf dbt_feature_store/target dbt_feature_store/dbt_packages dbt_feature_store/logs
 
 # ──────────────────────────────────────────────
 # Cleanup

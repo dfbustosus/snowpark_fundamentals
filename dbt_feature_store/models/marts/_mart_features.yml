@@ -1,0 +1,65 @@
+version: 2
+
+models:
+  - name: fct_churn_features
+    description: "Model-ready churn prediction feature table. Wide table combining all feature layers. One row per CUSTOMER_ID."
+    columns:
+      - name: CUSTOMER_ID
+        description: "Unique customer identifier — grain of this table"
+        tests:
+          - unique
+          - not_null
+      - name: DAYS_SINCE_LAST_ORDER
+        description: "Days since last completed order"
+        tests:
+          - not_null
+      - name: ORDERS_30D
+        description: "Completed orders in last 30 days"
+      - name: ORDERS_90D
+        description: "Completed orders in last 90 days"
+      - name: ORDERS_365D
+        description: "Completed orders in last 365 days"
+      - name: ORDERS_TOTAL
+        description: "Lifetime completed order count"
+      - name: SPEND_TOTAL
+        description: "Lifetime total spend"
+        tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+      - name: AVG_ORDER_VALUE
+        description: "Average completed order amount"
+      - name: SPEND_PER_ORDER
+        description: "Derived: spend_total / orders_total"
+      - name: ORDER_RECENCY_RATIO
+        description: "Derived: orders_90d / orders_365d"
+      - name: TOTAL_PAGE_VIEWS
+        description: "Lifetime page view count"
+      - name: TOTAL_CLICKS
+        description: "Lifetime click count"
+      - name: TOTAL_SUPPORT_TICKETS
+        description: "Lifetime support ticket count"
+      - name: INTERACTIONS_30D
+        description: "All interactions in last 30 days"
+      - name: DAYS_SINCE_LAST_INTERACTION
+        description: "Days since last engagement event"
+      - name: CLICK_THROUGH_RATE
+        description: "Derived: clicks / page_views"
+      - name: ENGAGEMENT_SCORE
+        description: "Composite engagement score"
+      - name: PREFERRED_CHANNEL
+        description: "Most frequent interaction channel"
+      - name: RECENCY_BUCKET
+        description: "Customer recency segment (ACTIVE/WARM/COOLING/AT_RISK/DORMANT)"
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['ACTIVE', 'WARM', 'COOLING', 'AT_RISK', 'DORMANT']
+      - name: SPEND_BUCKET
+        description: "Customer spend tier (HIGH/MEDIUM/LOW/NONE)"
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['HIGH', 'MEDIUM', 'LOW', 'NONE']
+      - name: _FEATURE_TIMESTAMP
+        description: "Timestamp when the feature row was computed"

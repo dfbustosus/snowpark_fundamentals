@@ -1,0 +1,173 @@
+version: 2
+
+models:
+  - name: fct_customer_rfm
+    description: "RFM (Recency, Frequency, Monetary) features with 30d/90d/365d time windows. One row per CUSTOMER_ID."
+    columns:
+      - name: CUSTOMER_ID
+        description: "Unique customer identifier — grain of this table"
+        tests:
+          - unique
+          - not_null
+      - name: DAYS_SINCE_LAST_ORDER
+        description: "Days between the customer's last completed order and today"
+      - name: ORDERS_30D
+        description: "Count of distinct completed orders in the last 30 days"
+        tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+      - name: ORDERS_90D
+        description: "Count of distinct completed orders in the last 90 days"
+        tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+      - name: ORDERS_365D
+        description: "Count of distinct completed orders in the last 365 days"
+        tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+      - name: ORDERS_TOTAL
+        description: "Lifetime count of distinct completed orders"
+        tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+      - name: SPEND_30D
+        description: "Total spend on completed orders in the last 30 days"
+        tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+      - name: SPEND_90D
+        description: "Total spend on completed orders in the last 90 days"
+        tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+      - name: SPEND_365D
+        description: "Total spend on completed orders in the last 365 days"
+        tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+      - name: SPEND_TOTAL
+        description: "Lifetime total spend on completed orders"
+        tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+      - name: AVG_ORDER_VALUE
+        description: "Average order amount across all completed orders"
+      - name: TOTAL_ITEMS
+        description: "Lifetime sum of items ordered"
+      - name: AVG_ITEMS_PER_ORDER
+        description: "Average number of items per completed order"
+      - name: DISTINCT_CATEGORIES
+        description: "Count of distinct product categories purchased"
+      - name: _FEATURE_TIMESTAMP
+        description: "Timestamp when the feature row was computed"
+
+  - name: fct_customer_behavior
+    description: "Behavioral engagement features from customer interactions. One row per CUSTOMER_ID."
+    columns:
+      - name: CUSTOMER_ID
+        description: "Unique customer identifier — grain of this table"
+        tests:
+          - unique
+          - not_null
+      - name: TOTAL_INTERACTIONS
+        description: "Lifetime count of all interaction events"
+        tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+      - name: TOTAL_PAGE_VIEWS
+        description: "Lifetime count of PAGE_VIEW interactions"
+      - name: TOTAL_CLICKS
+        description: "Lifetime count of CLICK interactions"
+      - name: TOTAL_SUPPORT_TICKETS
+        description: "Lifetime count of SUPPORT_TICKET interactions"
+      - name: TOTAL_EMAIL_ENGAGEMENTS
+        description: "Lifetime count of EMAIL_OPEN + EMAIL_CLICK interactions"
+      - name: INTERACTIONS_30D
+        description: "Count of all interactions in the last 30 days"
+        tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+      - name: INTERACTIONS_90D
+        description: "Count of all interactions in the last 90 days"
+        tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+      - name: SUPPORT_TICKETS_30D
+        description: "Count of support tickets in the last 30 days"
+      - name: DAYS_SINCE_LAST_INTERACTION
+        description: "Days between the customer's last interaction and today"
+      - name: PREFERRED_CHANNEL
+        description: "Most frequent interaction channel (WEB, MOBILE, EMAIL)"
+      - name: AVG_DURATION_SECONDS
+        description: "Average interaction duration in seconds"
+      - name: _FEATURE_TIMESTAMP
+        description: "Timestamp when the feature row was computed"
+
+  - name: fct_customer_derived
+    description: "Derived features: ratios, buckets, composite scores. Joins RFM + behavioral. One row per CUSTOMER_ID."
+    columns:
+      - name: CUSTOMER_ID
+        description: "Unique customer identifier — grain of this table"
+        tests:
+          - unique
+          - not_null
+      - name: DAYS_SINCE_LAST_ORDER
+        description: "Days since last completed order (from RFM)"
+      - name: ORDERS_30D
+        description: "Orders in last 30 days (from RFM)"
+      - name: ORDERS_90D
+        description: "Orders in last 90 days (from RFM)"
+      - name: ORDERS_365D
+        description: "Orders in last 365 days (from RFM)"
+      - name: ORDERS_TOTAL
+        description: "Lifetime order count (from RFM)"
+      - name: SPEND_TOTAL
+        description: "Lifetime spend (from RFM)"
+      - name: AVG_ORDER_VALUE
+        description: "Average order value (from RFM)"
+      - name: TOTAL_PAGE_VIEWS
+        description: "Lifetime page views (from behavioral, default 0)"
+      - name: TOTAL_CLICKS
+        description: "Lifetime clicks (from behavioral, default 0)"
+      - name: TOTAL_SUPPORT_TICKETS
+        description: "Lifetime support tickets (from behavioral, default 0)"
+      - name: INTERACTIONS_30D
+        description: "Interactions in last 30 days (from behavioral, default 0)"
+      - name: DAYS_SINCE_LAST_INTERACTION
+        description: "Days since last interaction (from behavioral, default 0)"
+      - name: PREFERRED_CHANNEL
+        description: "Most frequent channel (from behavioral)"
+      - name: SPEND_PER_ORDER
+        description: "Derived ratio: SPEND_TOTAL / ORDERS_TOTAL (safe division, 0 if no orders)"
+      - name: ORDER_RECENCY_RATIO
+        description: "Derived ratio: ORDERS_90D / ORDERS_365D (measures acceleration, 0 if no yearly orders)"
+      - name: CLICK_THROUGH_RATE
+        description: "Derived ratio: TOTAL_CLICKS / TOTAL_PAGE_VIEWS (0 if no page views)"
+      - name: RECENCY_BUCKET
+        description: "Customer recency segment: ACTIVE (<=30d), WARM (<=90d), COOLING (<=180d), AT_RISK (<=365d), DORMANT (>365d)"
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['ACTIVE', 'WARM', 'COOLING', 'AT_RISK', 'DORMANT']
+      - name: SPEND_BUCKET
+        description: "Customer spend tier: HIGH (>=10k), MEDIUM (>=2k), LOW (>0), NONE (0)"
+        tests:
+          - accepted_values:
+              arguments:
+                values: ['HIGH', 'MEDIUM', 'LOW', 'NONE']
+      - name: ENGAGEMENT_SCORE
+        description: "Composite score: clicks*2 + page_views*0.5 + email*1.5 - support_tickets*3"
+      - name: _FEATURE_TIMESTAMP
+        description: "Timestamp when the feature row was computed"

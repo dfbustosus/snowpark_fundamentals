@@ -1,0 +1,58 @@
+version: 2
+
+models:
+  - name: stg_customers
+    description: "Deduplicated customer dimension derived from transactions. One row per customer."
+    columns:
+      - name: CUSTOMER_ID
+        description: "Unique customer identifier"
+        tests:
+          - unique
+          - not_null
+      - name: LAST_ORDER_DATE
+        description: "Date of the customer's most recent completed order"
+      - name: FIRST_ORDER_DATE
+        description: "Date of the customer's earliest completed order"
+      - name: TOTAL_ORDERS
+        description: "Count of distinct completed transactions"
+      - name: TOTAL_SPEND
+        description: "Sum of all completed order amounts (rounded to 2 decimals)"
+      - name: PREFERRED_CHANNEL
+        description: "Most frequent purchase channel (WEB, MOBILE, IN_STORE)"
+      - name: CUSTOMER_TENURE_DAYS
+        description: "Days between first and last order"
+      - name: _LOADED_AT
+        description: "Timestamp when this row was materialized"
+
+  - name: stg_orders
+    description: "Deduplicated and cleaned order history. One row per transaction."
+    columns:
+      - name: TRANSACTION_ID
+        description: "Unique transaction identifier"
+        tests:
+          - unique
+          - not_null
+      - name: CUSTOMER_ID
+        description: "Customer who placed the order"
+        tests:
+          - not_null
+      - name: ORDER_DATE
+        description: "Date the order was placed"
+        tests:
+          - not_null
+      - name: ORDER_AMOUNT
+        description: "Total monetary value of the order"
+      - name: CATEGORY
+        description: "Product category (ELECTRONICS, CLOTHING, HOME, SPORTS, FOOD, TRAVEL)"
+      - name: ORDER_STATUS
+        description: "Raw order status (COMPLETED, CANCELLED)"
+      - name: ITEM_COUNT
+        description: "Number of items in the order"
+      - name: CHANNEL
+        description: "Purchase channel (WEB, MOBILE, IN_STORE)"
+      - name: IS_COMPLETED
+        description: "Boolean flag — true when ORDER_STATUS = COMPLETED"
+      - name: IS_CANCELLED
+        description: "Boolean flag — true when ORDER_STATUS = CANCELLED"
+      - name: _LOADED_AT
+        description: "Timestamp when this row was materialized"
