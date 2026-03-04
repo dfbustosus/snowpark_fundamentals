@@ -78,3 +78,38 @@ def sample_env_vars():
     }
     with patch.dict("os.environ", env, clear=False):
         yield env
+
+
+@pytest.fixture
+def mock_feature_store():
+    """Create a mock Snowflake Feature Store."""
+    fs = MagicMock()
+    fs.register_entity.return_value = MagicMock()
+    fs.register_feature_view.return_value = MagicMock()
+    fs.generate_dataset.return_value = MagicMock()
+    fs.retrieve_feature_values.return_value = MagicMock()
+    fs.list_entities.return_value = MagicMock()
+    fs.list_feature_views.return_value = MagicMock()
+    fs.get_feature_view.return_value = MagicMock()
+    return fs
+
+
+@pytest.fixture
+def mock_entity():
+    """Create a mock Feature Store Entity."""
+    entity = MagicMock()
+    entity.name = "CUSTOMER"
+    entity.join_keys = ["CUSTOMER_ID"]
+    entity.desc = ""
+    return entity
+
+
+@pytest.fixture
+def mock_feature_view():
+    """Create a mock Feature Store FeatureView."""
+    fv = MagicMock()
+    fv.name = "CUSTOMER_RFM"
+    fv.entities = [MagicMock()]
+    fv.refresh_freq = "1 day"
+    fv.desc = "RFM features"
+    return fv
