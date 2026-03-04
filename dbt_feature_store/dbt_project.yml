@@ -1,0 +1,36 @@
+name: 'tutorial_feature_store'
+version: '1.0.0'
+config-version: 2
+profile: 'tutorial_feature_store'
+
+# Paths
+model-paths: ["models"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+seed-paths: ["seeds"]
+
+# Variables
+vars:
+  time_windows: [30, 90, 365]
+  feature_store_schema: 'FEATURE_STORE'
+
+# Model Layer Configuration
+# Simplified 3-layer architecture (adapted from NCL's staging→L0→L1→L2→marts)
+models:
+  tutorial_feature_store:
+    staging:
+      +schema: stg
+      +materialized: view
+      +tags: ['staging']
+    features:
+      +schema: features
+      +materialized: table
+      +tags: ['features']
+    marts:
+      +schema: feature_store
+      +materialized: table
+      +tags: ['mart', 'feature_store']
+
+clean-targets:
+  - "target"
+  - "dbt_packages"
