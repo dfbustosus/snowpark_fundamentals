@@ -1,10 +1,45 @@
 """Snowflake Model Registry operations."""
 
 from snowpark_fundamentals.registry.model_registry import (
+    compare_model_versions,
     delete_model,
+    delete_model_metric,
+    get_model_by_alias,
+    get_model_metrics,
+    get_model_version,
+    get_registry,
     list_models,
+    list_versions,
     load_model_and_predict,
     log_model,
+    predict_proba,
+    set_default_version,
+    set_model_alias,
+    set_model_comment,
+    set_model_metrics,
+    set_model_tags,
+    show_model_functions,
+    unset_model_alias,
 )
 
-__all__ = ["log_model", "list_models", "load_model_and_predict", "delete_model"]
+__all__ = [
+    "get_registry",
+    "log_model",
+    "list_models",
+    "load_model_and_predict",
+    "delete_model",
+    "get_model_version",
+    "list_versions",
+    "set_default_version",
+    "compare_model_versions",
+    "set_model_metrics",
+    "get_model_metrics",
+    "delete_model_metric",
+    "set_model_alias",
+    "unset_model_alias",
+    "get_model_by_alias",
+    "set_model_tags",
+    "set_model_comment",
+    "show_model_functions",
+    "predict_proba",
+]

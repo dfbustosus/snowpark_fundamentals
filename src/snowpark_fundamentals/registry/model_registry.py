@@ -6,6 +6,7 @@ using Snowflake's native Model Registry (snowflake.ml.registry).
 
 from __future__ import annotations
 
+import json
 from typing import Any
 
 from snowflake.ml.registry import Registry
@@ -104,3 +105,315 @@ def delete_model(registry: Registry, model_name: str) -> None:
         model_name: Model to delete.
     """
     registry.delete_model(model_name)
+
+
+# ---------------------------------------------------------------------------
+# Version Management
+# ---------------------------------------------------------------------------
+
+
+def get_model_version(registry: Registry, model_name: str, version_name: str) -> Any:
+    """Get a specific model version from the registry.
+
+    Args:
+        registry: Model Registry instance.
+        model_name: Registered model name.
+        version_name: Version label to retrieve.
+
+    Returns:
+        ModelVersion reference.
+    """
+    return registry.get_model(model_name).version(version_name)
+
+
+def list_versions(registry: Registry, model_name: str) -> DataFrame:
+    """List all versions of a registered model.
+
+    Args:
+        registry: Model Registry instance.
+        model_name: Registered model name.
+
+    Returns:
+        DataFrame with version metadata including aliases.
+    """
+    result: DataFrame = registry.get_model(model_name).show_versions()
+    return result
+
+
+def set_default_version(registry: Registry, model_name: str, version_name: str) -> None:
+    """Set the default version for a model.
+
+    The default version is used when no version is specified in
+    inference calls.
+
+    Args:
+        registry: Model Registry instance.
+        model_name: Registered model name.
+        version_name: Version to set as default.
+    """
+    model_ref = registry.get_model(model_name)
+    model_ref.default = version_name
+
+
+def compare_model_versions(
+    registry: Registry,
+    model_name: str,
+    version_names: list[str],
+) -> list[dict]:
+    """Compare metrics across multiple model versions.
+
+    Collects metrics from each version into a list of dicts
+    for easy side-by-side comparison.
+
+    Args:
+        registry: Model Registry instance.
+        model_name: Registered model name.
+        version_names: List of version labels to compare.
+
+    Returns:
+        List of dicts, each containing version name and its metrics.
+    """
+    model_ref = registry.get_model(model_name)
+    results: list[dict] = []
+    for version_name in version_names:
+        version = model_ref.version(version_name)
+        metrics = version.show_metrics()
+        results.append({"version": version_name, "metrics": metrics})
+    return results
+
+
+# ---------------------------------------------------------------------------
+# Metrics Management
+# ---------------------------------------------------------------------------
+
+
+def set_model_metrics(
+    registry: Registry,
+    model_name: str,
+    version_name: str,
+    metrics: dict[str, float],
+) -> None:
+    """Set metrics on a model version.
+
+    Args:
+        registry: Model Registry instance.
+        model_name: Registered model name.
+        version_name: Version to update.
+        metrics: Dict of metric name to value.
+    """
+    version = registry.get_model(model_name).version(version_name)
+    for key, value in metrics.items():
+        version.set_metric(key, value)
+
+
+def get_model_metrics(
+    registry: Registry,
+    model_name: str,
+    version_name: str,
+) -> dict:
+    """Get all metrics for a model version.
+
+    Args:
+        registry: Model Registry instance.
+        model_name: Registered model name.
+        version_name: Version to query.
+
+    Returns:
+        Dict of metric name to value.
+    """
+    version = registry.get_model(model_name).version(version_name)
+    result: dict = version.show_metrics()
+    return result
+
+
+def delete_model_metric(
+    registry: Registry,
+    model_name: str,
+    version_name: str,
+    metric_name: str,
+) -> None:
+    """Delete a specific metric from a model version.
+
+    Args:
+        registry: Model Registry instance.
+        model_name: Registered model name.
+        version_name: Version to update.
+        metric_name: Name of the metric to remove.
+    """
+    version = registry.get_model(model_name).version(version_name)
+    version.delete_metric(metric_name)
+
+
+# ---------------------------------------------------------------------------
+# Lifecycle Management
+# ---------------------------------------------------------------------------
+
+
+def set_model_alias(
+    registry: Registry,
+    model_name: str,
+    version_name: str,
+    alias: str,
+) -> None:
+    """Set an alias on a model version (e.g., 'production', 'staging').
+
+    Aliases provide stable references for deployment. If the alias
+    already exists on another version, it is first removed from the
+    old version before being set on the target version.
+
+    Args:
+        registry: Model Registry instance.
+        model_name: Registered model name.
+        version_name: Version to tag.
+        alias: Alias string (e.g., 'production').
+    """
+    model_ref = registry.get_model(model_name)
+    alias_upper = alias.upper()
+
+    # Check existing versions for the alias and unset if on a different version
+    versions_df = model_ref.show_versions()
+    for _, row in versions_df.iterrows():
+        aliases_raw = row.get("aliases", "[]")
+        try:
+            current_aliases = (
+                json.loads(aliases_raw) if isinstance(aliases_raw, str) else (aliases_raw or [])
+            )
+        except (json.JSONDecodeError, TypeError):
+            current_aliases = []
+        if alias_upper in current_aliases:
+            if row["name"] == version_name:
+                return  # Already on target version
+            old_version = model_ref.version(row["name"])
+            old_version.unset_alias(alias)
+            break
+
+    target_version = model_ref.version(version_name)
+    target_version.set_alias(alias)
+
+
+def unset_model_alias(
+    registry: Registry,
+    model_name: str,
+    version_name: str,
+    alias: str,
+) -> None:
+    """Remove an alias from a model version.
+
+    Args:
+        registry: Model Registry instance.
+        model_name: Registered model name.
+        version_name: Version to untag.
+        alias: Alias to remove.
+    """
+    version = registry.get_model(model_name).version(version_name)
+    version.unset_alias(alias)
+
+
+def get_model_by_alias(registry: Registry, model_name: str, alias: str) -> Any:
+    """Retrieve a model version by its alias.
+
+    This is the recommended pattern for production inference:
+    always reference by alias ('production') rather than a
+    specific version name.
+
+    Args:
+        registry: Model Registry instance.
+        model_name: Registered model name.
+        alias: Alias to look up (e.g., 'production').
+
+    Returns:
+        ModelVersion reference.
+    """
+    return registry.get_model(model_name).version(alias)
+
+
+def set_model_tags(
+    registry: Registry,
+    model_name: str,
+    tags: dict[str, str],
+) -> None:
+    """Set tags on a model for governance and discovery.
+
+    Args:
+        registry: Model Registry instance.
+        model_name: Registered model name.
+        tags: Dict of tag key to value.
+    """
+    model_ref = registry.get_model(model_name)
+    for key, value in tags.items():
+        model_ref.set_tag(key, value)
+
+
+# ---------------------------------------------------------------------------
+# Metadata & Advanced Inference
+# ---------------------------------------------------------------------------
+
+
+def set_model_comment(
+    registry: Registry,
+    model_name: str,
+    comment: str,
+    version_name: str | None = None,
+) -> None:
+    """Set a comment on a model or a specific version.
+
+    Args:
+        registry: Model Registry instance.
+        model_name: Registered model name.
+        comment: Descriptive comment.
+        version_name: If provided, set on the version; otherwise on the model.
+    """
+    model_ref = registry.get_model(model_name)
+    if version_name:
+        version = model_ref.version(version_name)
+        version.comment = comment
+    else:
+        model_ref.comment = comment
+
+
+def show_model_functions(
+    registry: Registry,
+    model_name: str,
+    version_name: str,
+) -> list[str]:
+    """List callable functions for a model version.
+
+    Registered models expose functions like 'predict', 'predict_proba',
+    and 'explain' depending on the model type.
+
+    Args:
+        registry: Model Registry instance.
+        model_name: Registered model name.
+        version_name: Version to inspect.
+
+    Returns:
+        List of function name strings.
+    """
+    version = registry.get_model(model_name).version(version_name)
+    functions: list[str] = version.show_functions()
+    return functions
+
+
+def predict_proba(
+    registry: Registry,
+    model_name: str,
+    version_name: str,
+    input_df: DataFrame,
+) -> DataFrame:
+    """Run probability predictions using a registered model.
+
+    Unlike predict() which returns class labels, predict_proba()
+    returns probability scores for each class.
+
+    Args:
+        registry: Model Registry instance.
+        model_name: Registered model name.
+        version_name: Version to use.
+        input_df: Data to score.
+
+    Returns:
+        DataFrame with probability columns.
+    """
+    version = registry.get_model(model_name).version(version_name)
+    result: DataFrame = version.run(input_df, function_name="predict_proba")
+    return result
