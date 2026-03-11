@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
+import pandas as pd
+
 from snowpark_fundamentals.registry.model_registry import (
     compare_model_versions,
     delete_model,
@@ -227,14 +229,47 @@ class TestDeleteModelMetric:
 
 
 class TestSetModelAlias:
-    def test_set_model_alias(self):
+    def test_set_alias_no_conflict(self):
         mock_registry = MagicMock()
+        mock_model = MagicMock()
+        mock_registry.get_model.return_value = mock_model
+        mock_model.show_versions.return_value = pd.DataFrame(
+            {"name": ["V1", "V2"], "aliases": ['["FIRST"]', '["DEFAULT","LAST"]']}
+        )
         mock_version = MagicMock()
-        mock_registry.get_model.return_value.version.return_value = mock_version
+        mock_model.version.return_value = mock_version
 
         set_model_alias(mock_registry, "my_model", "V1", "production")
 
         mock_version.set_alias.assert_called_once_with("production")
+
+    def test_set_alias_moves_from_other_version(self):
+        mock_registry = MagicMock()
+        mock_model = MagicMock()
+        mock_registry.get_model.return_value = mock_model
+        mock_model.show_versions.return_value = pd.DataFrame(
+            {"name": ["V1", "V2"], "aliases": ['["PRODUCTION","FIRST"]', '["DEFAULT","LAST"]']}
+        )
+        old_version = MagicMock()
+        new_version = MagicMock()
+        mock_model.version.side_effect = lambda v: old_version if v == "V1" else new_version
+
+        set_model_alias(mock_registry, "my_model", "V2", "production")
+
+        old_version.unset_alias.assert_called_once_with("production")
+        new_version.set_alias.assert_called_once_with("production")
+
+    def test_set_alias_already_on_target_is_noop(self):
+        mock_registry = MagicMock()
+        mock_model = MagicMock()
+        mock_registry.get_model.return_value = mock_model
+        mock_model.show_versions.return_value = pd.DataFrame(
+            {"name": ["V1", "V2"], "aliases": ['["PRODUCTION","FIRST"]', '["DEFAULT","LAST"]']}
+        )
+
+        set_model_alias(mock_registry, "my_model", "V1", "production")
+
+        mock_model.version.assert_not_called()
 
 
 class TestUnsetModelAlias:
