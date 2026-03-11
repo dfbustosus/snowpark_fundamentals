@@ -6,6 +6,7 @@ using Snowflake's native Model Registry (snowflake.ml.registry).
 
 from __future__ import annotations
 
+import json
 from typing import Any
 
 from snowflake.ml.registry import Registry
@@ -256,8 +257,9 @@ def set_model_alias(
 ) -> None:
     """Set an alias on a model version (e.g., 'production', 'staging').
 
-    Aliases provide stable references for deployment. Moving an alias
-    to a new version automatically removes it from the old one.
+    Aliases provide stable references for deployment. If the alias
+    already exists on another version, it is first removed from the
+    old version before being set on the target version.
 
     Args:
         registry: Model Registry instance.
@@ -265,8 +267,28 @@ def set_model_alias(
         version_name: Version to tag.
         alias: Alias string (e.g., 'production').
     """
-    version = registry.get_model(model_name).version(version_name)
-    version.set_alias(alias)
+    model_ref = registry.get_model(model_name)
+    alias_upper = alias.upper()
+
+    # Check existing versions for the alias and unset if on a different version
+    versions_df = model_ref.show_versions()
+    for _, row in versions_df.iterrows():
+        aliases_raw = row.get("aliases", "[]")
+        try:
+            current_aliases = (
+                json.loads(aliases_raw) if isinstance(aliases_raw, str) else (aliases_raw or [])
+            )
+        except (json.JSONDecodeError, TypeError):
+            current_aliases = []
+        if alias_upper in current_aliases:
+            if row["name"] == version_name:
+                return  # Already on target version
+            old_version = model_ref.version(row["name"])
+            old_version.unset_alias(alias)
+            break
+
+    target_version = model_ref.version(version_name)
+    target_version.set_alias(alias)
 
 
 def unset_model_alias(
