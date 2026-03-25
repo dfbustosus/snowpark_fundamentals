@@ -1,5 +1,10 @@
-"""Model training, evaluation, pipeline construction, and hyperparameter tuning with Snowpark ML."""
+"""Model training, evaluation, pipeline, tuning, and distributed training with Snowpark ML."""
 
+from snowpark_fundamentals.modeling.distributed import (
+    check_compute_pool_status,
+    compare_training_results,
+    validate_distributed_prerequisites,
+)
 from snowpark_fundamentals.modeling.evaluation import (
     evaluate_binary_classifier,
     get_feature_importance,
@@ -22,4 +27,7 @@ __all__ = [
     "randomized_search_cv",
     "get_search_results",
     "get_best_model_params",
+    "check_compute_pool_status",
+    "validate_distributed_prerequisites",
+    "compare_training_results",
 ]
