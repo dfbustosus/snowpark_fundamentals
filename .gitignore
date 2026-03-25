@@ -211,3 +211,5 @@ dbt_feature_store/target/
 dbt_feature_store/dbt_packages/
 dbt_feature_store/logs/
 .user.yml
+*.pptx
+*.pdf

@@ -136,6 +136,17 @@ def randomized_search_cv(
     return search
 
 
+def _get_sklearn_object(search_cv: Any) -> Any:
+    """Get the underlying sklearn search object from a Snowpark ML wrapper.
+
+    Snowpark ML >= 1.31 no longer forwards best_params_, best_score_,
+    cv_results_ via __getattr__. Access them through to_sklearn().
+    """
+    if hasattr(search_cv, "to_sklearn"):
+        return search_cv.to_sklearn()
+    return search_cv
+
+
 def get_search_results(search_cv: Any) -> list[dict[str, Any]]:
     """Extract cross-validation results from a fitted search object.
 
@@ -146,7 +157,8 @@ def get_search_results(search_cv: Any) -> list[dict[str, Any]]:
         List of dicts with params, mean_test_score, std_test_score,
         and rank_test_score — sorted by rank ascending.
     """
-    cv_results = search_cv.cv_results_
+    sk = _get_sklearn_object(search_cv)
+    cv_results = sk.cv_results_
     n_candidates = len(cv_results["mean_test_score"])
 
     results = []
@@ -172,8 +184,9 @@ def get_best_model_params(search_cv: Any) -> dict[str, Any]:
     Returns:
         Dict with best_params, best_score, and n_candidates_evaluated.
     """
+    sk = _get_sklearn_object(search_cv)
     return {
-        "best_params": search_cv.best_params_,
-        "best_score": float(search_cv.best_score_),
-        "n_candidates_evaluated": len(search_cv.cv_results_["mean_test_score"]),
+        "best_params": sk.best_params_,
+        "best_score": float(sk.best_score_),
+        "n_candidates_evaluated": len(sk.cv_results_["mean_test_score"]),
     }

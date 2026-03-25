@@ -126,8 +126,8 @@ class TestRandomizedSearchCV:
 
 class TestGetSearchResults:
     def test_results_sorted_by_rank(self):
-        mock_search = MagicMock()
-        mock_search.cv_results_ = {
+        mock_sklearn = MagicMock()
+        mock_sklearn.cv_results_ = {
             "params": [
                 {"n_estimators": 100, "max_depth": 4},
                 {"n_estimators": 200, "max_depth": 6},
@@ -137,6 +137,8 @@ class TestGetSearchResults:
             "std_test_score": [0.02, 0.01, 0.03],
             "rank_test_score": [3, 1, 2],
         }
+        mock_search = MagicMock()
+        mock_search.to_sklearn.return_value = mock_sklearn
 
         results = get_search_results(mock_search)
 
@@ -147,13 +149,15 @@ class TestGetSearchResults:
         assert results[2]["rank_test_score"] == 3
 
     def test_results_contain_expected_keys(self):
-        mock_search = MagicMock()
-        mock_search.cv_results_ = {
+        mock_sklearn = MagicMock()
+        mock_sklearn.cv_results_ = {
             "params": [{"max_depth": 4}],
             "mean_test_score": [0.90],
             "std_test_score": [0.015],
             "rank_test_score": [1],
         }
+        mock_search = MagicMock()
+        mock_search.to_sklearn.return_value = mock_sklearn
 
         results = get_search_results(mock_search)
 
@@ -164,10 +168,12 @@ class TestGetSearchResults:
 
 class TestGetBestModelParams:
     def test_extracts_best_params(self):
+        mock_sklearn = MagicMock()
+        mock_sklearn.best_params_ = {"n_estimators": 200, "max_depth": 6}
+        mock_sklearn.best_score_ = 0.92
+        mock_sklearn.cv_results_ = {"mean_test_score": [0.85, 0.92, 0.88]}
         mock_search = MagicMock()
-        mock_search.best_params_ = {"n_estimators": 200, "max_depth": 6}
-        mock_search.best_score_ = 0.92
-        mock_search.cv_results_ = {"mean_test_score": [0.85, 0.92, 0.88]}
+        mock_search.to_sklearn.return_value = mock_sklearn
 
         result = get_best_model_params(mock_search)
 
@@ -176,10 +182,12 @@ class TestGetBestModelParams:
         assert result["n_candidates_evaluated"] == 3
 
     def test_single_candidate(self):
+        mock_sklearn = MagicMock()
+        mock_sklearn.best_params_ = {"max_depth": 4}
+        mock_sklearn.best_score_ = 0.88
+        mock_sklearn.cv_results_ = {"mean_test_score": [0.88]}
         mock_search = MagicMock()
-        mock_search.best_params_ = {"max_depth": 4}
-        mock_search.best_score_ = 0.88
-        mock_search.cv_results_ = {"mean_test_score": [0.88]}
+        mock_search.to_sklearn.return_value = mock_sklearn
 
         result = get_best_model_params(mock_search)
 
