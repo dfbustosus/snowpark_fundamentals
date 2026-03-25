@@ -79,6 +79,33 @@ def split_data(
     return train_df, test_df
 
 
+def sample_stratified(
+    df: DataFrame,
+    label_col: str,
+    fractions: dict | None = None,
+    frac: float = 0.5,
+) -> DataFrame:
+    """Sample a DataFrame preserving label distribution (stratified sampling).
+
+    Uses Snowpark's sample_by to sample each class at the specified rate,
+    maintaining original class proportions. All computation runs server-side.
+
+    Args:
+        df: Input Snowpark DataFrame.
+        label_col: Column name to stratify on.
+        fractions: Explicit per-class fractions dict (e.g., {0: 0.3, 1: 0.8}).
+            If None, uses frac for all distinct values.
+        frac: Fraction to sample from each class (used when fractions is None).
+
+    Returns:
+        Sampled DataFrame with approximately frac * original rows per class.
+    """
+    if fractions is None:
+        distinct_values = [row[0] for row in df.select(label_col).distinct().collect()]
+        fractions = {val: frac for val in distinct_values}
+    return df.sample_by(F.col(label_col), fractions)  # type: ignore[misc]
+
+
 def add_row_index(df: DataFrame, column_name: str = "ROW_INDEX") -> DataFrame:
     """Add a monotonically increasing row index to a DataFrame.
 
