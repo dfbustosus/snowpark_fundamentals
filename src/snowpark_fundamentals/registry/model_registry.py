@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import json
 import warnings
-from typing import Any
+from typing import Any, cast
 
 from snowflake.ml.registry import Registry
 from snowflake.snowpark import DataFrame, Session
@@ -98,14 +98,14 @@ def load_model_and_predict(
     normalized_columns = {str(col).strip('"').upper(): str(col) for col in result.columns}
     prediction_col = normalized_columns.get("PREDICTION")
     if prediction_col == "PREDICTION":
-        return result
+        return cast(DataFrame, result)
     if prediction_col is not None:
-        return result.with_column_renamed(prediction_col, "PREDICTION")
+        return cast(DataFrame, result.with_column_renamed(prediction_col, "PREDICTION"))
 
     fallback_col = normalized_columns.get("OUTPUT_FEATURE_0")
     if fallback_col is not None:
-        return result.with_column_renamed(fallback_col, "PREDICTION")
-    return result
+        return cast(DataFrame, result.with_column_renamed(fallback_col, "PREDICTION"))
+    return cast(DataFrame, result)
 
 
 def delete_model(registry: Registry, model_name: str) -> None:
@@ -356,7 +356,7 @@ def _get_registry_session(registry: Registry) -> Session:
     session = getattr(model_ops, "_session", None)
     if session is None:
         raise RuntimeError("Unable to resolve Snowpark session from registry.")
-    return session
+    return cast(Session, session)
 
 
 def _is_missing_tag_error(error: Exception) -> bool:
