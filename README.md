@@ -64,7 +64,8 @@ snowpark_fundamentals/
 │       ├── feature_data.py          # Synthetic temporal data generation
 │       ├── feature_views.py         # Managed & external FeatureViews
 │       └── training_sets.py         # Training set & feature retrieval
-├── notebooks/                       # Tutorial Jupyter notebooks (0-11)
+├── notebooks/                       # Tutorial Jupyter notebooks (01-16)
+│   └── onsite/                      # NCL onsite training (day1/, day2/, day3/)
 ├── tests/                           # Unit tests with mocking
 ├── dbt_feature_store/               # dbt project for feature engineering
 │   ├── models/                      # staging → features → marts
@@ -204,13 +205,30 @@ This project follows production-grade patterns applicable to any Snowpark ML pro
 - **Optional extras** — `[dev]` and `[notebooks]` extras keep production dependencies lean
 - **Single source of truth** — `pyproject.toml` manages all project metadata, tool configs, and dependency specs in one place
 
+## Onsite Training (`notebooks/onsite/`)
+
+Interactive, hands-on notebooks for NCL onsite training, organized by day. Each uses schema isolation (`MLDS_D` database, per-student schemas). See [`notebooks/onsite/README.md`](notebooks/onsite/README.md) for full schedule and setup.
+
+| Day | Session | Path | Topics |
+|-----|---------|------|--------|
+| 1 | 1:45–2:30 | `onsite/day1/17_experimentation_model_training` | Experiment tracking, feature set comparison, provenance metadata |
+| 1 | 2:45–3:30 | `onsite/day1/18_model_validation_registration` | Holdout validation, champion/challenger, programmatic promotion |
+| 1 | 3:30–4:00 | `onsite/day1/19_deployment_serving_monitoring` | Batch vs real-time inference, feature drift detection, retraining triggers |
+| 2 | 2:45–3:30 | `onsite/day2/20_advanced_snowpark_patterns` | Scalar & vectorized UDFs, window functions, stored procedures |
+| 2 | 3:30–4:00 | `onsite/day2/21_udfs_realworld_patterns` | Hands-on lab: UDFs, window functions, SP pipeline (+ solution) |
+| 3 | 9:15–10:00 | `onsite/day3/22_exercise_classification` | End-to-end classification with Feature Store and Registry (+ solution) |
+| 3 | 11:00–11:45 | `onsite/day3/23_exercise_operational` | Retrain, update Feature Store, troubleshoot pipeline (+ solution) |
+
+Instructor guides in `docs/module_17..23_instructor_guide.md` and `docs/day3_exercises_instructor_guide.md`.
+
 ## Series Roadmap
 
 | Week | Topic | Status |
 |------|-------|--------|
 | 1 | **Snowpark ML Fundamentals** | Complete |
 | 2 | **Feature Engineering in Snowflake** | Complete |
-| 3 | Model Training at Scale | Upcoming |
+| 3 | **Model Training at Scale** | Complete |
+| Onsite | **NCL Training (Days 1–3)** | Complete |
 | 4 | Inference Patterns | Upcoming |
 | 5 | Monitoring & Observability | Upcoming |
 | 6 | CI/CD for Snowflake ML | Upcoming |
