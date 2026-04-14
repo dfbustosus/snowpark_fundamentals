@@ -7,6 +7,7 @@ using Snowflake's native Model Registry (snowflake.ml.registry).
 from __future__ import annotations
 
 import json
+import warnings
 from typing import Any
 
 from snowflake.ml.registry import Registry
@@ -94,6 +95,16 @@ def load_model_and_predict(
     model_ref = registry.get_model(model_name)
     model_version = model_ref.version(version_name)
     result: DataFrame = model_version.run(input_df, function_name="predict")
+    normalized_columns = {str(col).strip('"').upper(): str(col) for col in result.columns}
+    prediction_col = normalized_columns.get("PREDICTION")
+    if prediction_col == "PREDICTION":
+        return result
+    if prediction_col is not None:
+        return result.with_column_renamed(prediction_col, "PREDICTION")
+
+    fallback_col = normalized_columns.get("OUTPUT_FEATURE_0")
+    if fallback_col is not None:
+        return result.with_column_renamed(fallback_col, "PREDICTION")
     return result
 
 
@@ -327,21 +338,152 @@ def get_model_by_alias(registry: Registry, model_name: str, alias: str) -> Any:
     return registry.get_model(model_name).version(alias)
 
 
+def _quote_identifier(identifier: str) -> str:
+    """Return a safely quoted Snowflake identifier."""
+    escaped = identifier.replace('"', '""')
+    return f'"{escaped}"'
+
+
+def _escape_sql_string(value: str) -> str:
+    """Escape a string for use in a single-quoted SQL literal."""
+    return value.replace("'", "''")
+
+
+def _get_registry_session(registry: Registry) -> Session:
+    """Resolve the Snowpark session from a registry instance."""
+    model_manager = getattr(registry, "_model_manager", None)
+    model_ops = getattr(model_manager, "_model_ops", None) if model_manager else None
+    session = getattr(model_ops, "_session", None)
+    if session is None:
+        raise RuntimeError("Unable to resolve Snowpark session from registry.")
+    return session
+
+
+def _is_missing_tag_error(error: Exception) -> bool:
+    """Return True when the error indicates the tag does not exist."""
+    message = str(error).lower()
+    return "tag" in message and "does not exist" in message
+
+
+def _ensure_tag_exists(session: Session, registry: Registry, tag_name: str) -> None:
+    """Create a tag if missing."""
+    session.sql(
+        f"CREATE TAG IF NOT EXISTS {registry.location}.{_quote_identifier(str(tag_name).upper())}"
+    ).collect()
+
+
+def _parse_model_version_metadata(metadata_value: Any) -> dict[str, Any]:
+    """Parse the metadata column returned by SHOW VERSIONS."""
+    if metadata_value in (None, ""):
+        return {}
+    if isinstance(metadata_value, str):
+        parsed = json.loads(metadata_value)
+        if not isinstance(parsed, dict):
+            raise ValueError(f"Model version metadata must be a dict, got {type(parsed).__name__}.")
+        return parsed
+    if isinstance(metadata_value, dict):
+        return dict(metadata_value)
+    try:
+        return dict(metadata_value)
+    except TypeError as exc:
+        raise ValueError(
+            f"Model version metadata must be convert. to dict, got {type(metadata_value).__name__}."
+        ) from exc
+
+
 def set_model_tags(
     registry: Registry,
     model_name: str,
     tags: dict[str, str],
+    *,
+    strict: bool = False,
 ) -> None:
     """Set tags on a model for governance and discovery.
+
+    Tags are model-level labels shared across every version of the model.
+    Use version metadata or comments for per-experiment provenance.
 
     Args:
         registry: Model Registry instance.
         model_name: Registered model name.
         tags: Dict of tag key to value.
+        strict: If True, raise when tag creation or assignment fails. If False,
+            emit a warning and continue so experiment logging is not blocked by
+            optional governance metadata.
     """
+    if not tags:
+        return
+
+    session = _get_registry_session(registry)
     model_ref = registry.get_model(model_name)
     for key, value in tags.items():
-        model_ref.set_tag(key, value)
+        try:
+            model_ref.set_tag(key, str(value))
+        except Exception as exc:
+            if _is_missing_tag_error(exc):
+                try:
+                    _ensure_tag_exists(session, registry, key)
+                    model_ref.set_tag(key, str(value))
+                    continue
+                except Exception as create_exc:
+                    message = (
+                        f"Skip. model tag {key!r} on {model_name}:unable to create/assign the tag "
+                        f"in {registry.location}. {create_exc}"
+                    )
+                    if strict:
+                        raise RuntimeError(message) from create_exc
+                    warnings.warn(message, stacklevel=2)
+                    continue
+
+            message = f"Skipping model tag {key!r} on {model_name}: {exc}"
+            if strict:
+                raise RuntimeError(message) from exc
+            warnings.warn(message, stacklevel=2)
+
+
+def get_model_version_metadata(
+    registry: Registry,
+    model_name: str,
+    version_name: str,
+) -> dict[str, Any]:
+    """Get the raw metadata stored on a model version."""
+    versions_df = registry.get_model(model_name).show_versions()
+    target_version = version_name.upper()
+    for _, row in versions_df.iterrows():
+        if str(row.get("name", "")).upper() == target_version:
+            return _parse_model_version_metadata(row.get("metadata"))
+    raise ValueError(f"Version {version_name!r} not found for model {model_name!r}.")
+
+
+def set_model_version_metadata(
+    registry: Registry,
+    model_name: str,
+    version_name: str,
+    metadata: dict[str, Any],
+) -> None:
+    """Merge structured metadata into a model version.
+
+    This preserves existing version metadata such as metrics and adds the new
+    keys on top. Use this for per-experiment provenance that should stay tied
+    to a specific registered version.
+    """
+    if not metadata:
+        return
+
+    session = _get_registry_session(registry)
+    model_ref = registry.get_model(model_name)
+    current_metadata = get_model_version_metadata(registry, model_name, version_name)
+    current_metadata.update(metadata)
+    metadata_json = json.dumps(current_metadata, sort_keys=True)
+    session.sql(
+        " ".join(
+            [
+                f"ALTER MODEL {model_ref.fully_qualified_name}",
+                f"MODIFY VERSION {_quote_identifier(version_name)}",
+                f"SET METADATA = '{_escape_sql_string(metadata_json)}'",
+            ]
+        )
+    ).collect()
 
 
 # ---------------------------------------------------------------------------
