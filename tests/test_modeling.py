@@ -18,12 +18,15 @@ class TestTrainModel:
         with patch.dict(MODEL_REGISTRY, {"xgboost": mock_cls}):
             result = train_model(
                 mock_dataframe,
-                feature_cols=["A", "B"],
-                label_col="LABEL",
+                feature_cols=["AGE", "TENURE_MONTHS"],
+                label_col="CHURNED",
                 model_type="xgboost",
             )
 
         mock_cls.assert_called_once()
+        call_kwargs = mock_cls.call_args[1]
+        assert call_kwargs["input_cols"] == ["AGE", "TENURE_MONTHS"]
+        assert call_kwargs["label_cols"] == ["CHURNED"]
         mock_model.fit.assert_called_once_with(mock_dataframe)
         assert result is mock_model
 
@@ -35,8 +38,8 @@ class TestTrainModel:
         with patch.dict(MODEL_REGISTRY, {"random_forest": mock_cls}):
             train_model(
                 mock_dataframe,
-                feature_cols=["A"],
-                label_col="LABEL",
+                feature_cols=["AGE"],
+                label_col="CHURNED",
                 model_type="random_forest",
             )
         mock_cls.assert_called_once()
@@ -46,8 +49,8 @@ class TestTrainModel:
         with pytest.raises(ValueError, match="Unsupported model type"):
             train_model(
                 mock_dataframe,
-                feature_cols=["A"],
-                label_col="LABEL",
+                feature_cols=["AGE"],
+                label_col="CHURNED",
                 model_type="invalid_model",
             )
 
@@ -59,14 +62,31 @@ class TestTrainModel:
         with patch.dict(MODEL_REGISTRY, {"xgboost": mock_cls}):
             train_model(
                 mock_dataframe,
-                feature_cols=["A"],
-                label_col="LABEL",
+                feature_cols=["AGE"],
+                label_col="CHURNED",
                 model_params={"n_estimators": 200, "max_depth": 10},
             )
 
         call_kwargs = mock_cls.call_args[1]
         assert call_kwargs["n_estimators"] == 200
         assert call_kwargs["max_depth"] == 10
+
+    def test_train_resolves_columns_case_insensitively(self, mock_dataframe):
+        mock_cls = MagicMock()
+        mock_model = MagicMock()
+        mock_cls.return_value = mock_model
+
+        with patch.dict(MODEL_REGISTRY, {"xgboost": mock_cls}):
+            train_model(
+                mock_dataframe,
+                feature_cols=["age", "tenure_months"],
+                label_col="churned",
+                model_type="xgboost",
+            )
+
+        call_kwargs = mock_cls.call_args[1]
+        assert call_kwargs["input_cols"] == ["AGE", "TENURE_MONTHS"]
+        assert call_kwargs["label_cols"] == ["CHURNED"]
 
 
 class TestPredict:
