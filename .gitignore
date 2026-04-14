@@ -213,3 +213,7 @@ dbt_feature_store/logs/
 .user.yml
 *.pptx
 *.pdf
+*_SOLUTION.ipynb
+*instructor_guide*.md
+pandas_*.md
+CLAUDE.md

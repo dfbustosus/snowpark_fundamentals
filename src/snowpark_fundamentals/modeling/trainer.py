@@ -28,6 +28,35 @@ MODEL_REGISTRY = {
 }
 
 
+def _resolve_dataframe_columns(df: DataFrame, columns: list[str]) -> list[str]:
+    """Resolve requested column names against a Snowpark DataFrame.
+
+    Snowflake commonly normalizes unquoted identifiers to uppercase. This helper
+    keeps notebook code resilient by matching requested column names
+    case-insensitively against the actual DataFrame schema.
+    """
+    available_columns = list(df.columns)
+    exact_map = {col: col for col in available_columns}
+    normalized_map = {col.upper(): col for col in available_columns}
+
+    resolved: list[str] = []
+    missing: list[str] = []
+    for column in columns:
+        if column in exact_map:
+            resolved.append(exact_map[column])
+        elif column.upper() in normalized_map:
+            resolved.append(normalized_map[column.upper()])
+        else:
+            missing.append(column)
+
+    if missing:
+        raise ValueError(
+            f"Columns not found in DataFrame: {missing}. Available columns: {available_columns}"
+        )
+
+    return resolved
+
+
 def train_model(
     train_df: DataFrame,
     feature_cols: list[str],
@@ -63,10 +92,12 @@ def train_model(
 
     model_cls = MODEL_REGISTRY[model_type]
     params = model_params or {}
+    resolved_feature_cols = _resolve_dataframe_columns(train_df, feature_cols)
+    resolved_label_col = _resolve_dataframe_columns(train_df, [label_col])[0]
 
     model = model_cls(
-        input_cols=feature_cols,
-        label_cols=[label_col],
+        input_cols=resolved_feature_cols,
+        label_cols=[resolved_label_col],
         output_cols=[output_col],
         **params,
     )

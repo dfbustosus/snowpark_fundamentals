@@ -74,8 +74,12 @@ def create_interaction_features(
 
     Returns:
         DataFrame with added interaction columns.
+
+    Notes:
+        Interaction columns use ``_X_`` in their canonical name.
     """
     for col_a, col_b in col_pairs:
+        interaction_expr = F.col(col_a) * F.col(col_b)
         interaction_name = f"{col_a}_X_{col_b}"
-        df = df.with_column(interaction_name, F.col(col_a) * F.col(col_b))
+        df = df.with_column(interaction_name, interaction_expr)
     return df

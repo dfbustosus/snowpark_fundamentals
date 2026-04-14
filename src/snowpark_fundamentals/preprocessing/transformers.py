@@ -114,3 +114,40 @@ def build_preprocessing_pipeline(
     transformers["encoder"] = encoder
 
     return df_processed, transformers
+
+
+def apply_preprocessing_pipeline(
+    df: DataFrame,
+    numeric_cols: list[str],
+    categorical_cols: list[str],
+    transformers: dict,
+) -> DataFrame:
+    """Apply previously fitted preprocessing transformers to new data.
+
+    Use this on validation/test/inference data so scaling and encoding are
+    driven by the transformers fitted on the training split rather than being
+    refit on each dataset independently.
+
+    Args:
+        df: Input DataFrame to transform.
+        numeric_cols: Numeric columns used during fitting.
+        categorical_cols: Categorical columns used during fitting.
+        transformers: Dict returned by build_preprocessing_pipeline().
+
+    Returns:
+        Transformed DataFrame with the fitted scaler/encoder outputs added.
+    """
+    df_processed = df
+
+    scaler = transformers.get("scaler")
+    if scaler is not None and numeric_cols:
+        df_processed = scaler.transform(df_processed)
+        for col in [f"{feature}_SCALED" for feature in numeric_cols]:
+            if col in df_processed.columns:
+                df_processed = df_processed.with_column(col, F.col(col).cast(DoubleType()))
+
+    encoder = transformers.get("encoder")
+    if encoder is not None and categorical_cols:
+        df_processed = encoder.transform(df_processed)
+
+    return df_processed
