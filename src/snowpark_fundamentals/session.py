@@ -27,6 +27,10 @@ def create_session(env_path: str | Path | None = None) -> Session:
     """
     config = SnowflakeConfig.from_env(env_path)
     session: Session = Session.builder.configs(config.to_connection_params()).create()
+
+    # Allow model packaging to upload local Python dependencies when a pinned
+    # version is unavailable from Snowflake's Anaconda channel.
+    session.custom_package_usage_config = {"enabled": True}
     return session
 
 
